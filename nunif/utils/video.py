@@ -14,6 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from fractions import Fraction
 import time
 import numpy as np
+from nunif.utils.ui import is_netstream, is_rtmp
 
 
 # Add video mimetypes that does not exist in mimetypes
@@ -349,7 +350,7 @@ class VideoOutputConfig():
 
 
 def get_default_video_codec(container_format):
-    if container_format in {"mp4", "mkv"}:
+    if container_format in {"mp4", "mkv", "flv"}:
         return LIBH264
     elif container_format == "avi":
         return "utvideo"
@@ -782,7 +783,10 @@ def process_video(input_path, output_path,
         if start_time is not None and not (start_time < end_time):
             raise ValueError("end_time must be greater than start_time")
 
-    output_path_tmp = path.join(path.dirname(output_path), "_tmp_" + path.basename(output_path))
+    if is_netstream(output_path):
+        output_path_tmp = output_path
+    else:
+        output_path_tmp = path.join(path.dirname(output_path), "_tmp_" + path.basename(output_path))
     input_container = av.open(input_path)
 
     if input_container.duration:
@@ -814,7 +818,10 @@ def process_video(input_path, output_path,
         config.video_codec = get_default_video_codec(config.container_format)
     configure_video_codec(config)
 
-    output_container = av.open(output_path_tmp, 'w', options=config.container_options)
+    if is_rtmp:
+        output_container = av.open(output_path_tmp, 'w', format='flv', options=config.container_options)
+    else:
+        output_container = av.open(output_path_tmp, 'w', options=config.container_options)
     fps_filter = FixedFPSFilter(video_input_stream, fps=config.fps, vf=vf)
     if config.output_width is not None and config.output_height is not None:
         output_size = config.output_width, config.output_height
@@ -916,7 +923,8 @@ def process_video(input_path, output_path,
 
     packet = video_output_stream.encode(None)
     if packet:
-        output_container.mux(packet)
+        pass
+        #output_container.mux(packet)
     pbar.close()
     output_container.close()
     input_container.close()

@@ -151,6 +151,7 @@ def process_video(ctx, input_filename, output_path, args):
 
     @torch.inference_mode()
     def frame_callback(frame):
+        #return frame
         if frame is None:
             return None
 
@@ -257,7 +258,7 @@ def create_parser(required_true=True):
     parser.add_argument("--resume", action="store_true",
                         help="skip processing when the output file already exists")
 
-    parser.add_argument("--video-format", "-vf", type=str, default="mp4", choices=["mp4", "mkv", "avi"],
+    parser.add_argument("--video-format", "-vf", type=str, default="mp4", choices=["mp4", "mkv", "avi", "flv"],
                         help="video container format")
     parser.add_argument("--video-codec", "-vc", type=str, default=None, help="video codec")
     parser.add_argument("--max-fps", type=float, default=128,
